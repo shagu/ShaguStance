@@ -1,0 +1,6 @@
+## Interface: 11200
+## Title: |cff33ffccShagu|cffffffffStance
+## Author: Eric (Shagu) Mauser, 2016
+## Notes: automatically switches to the required stance of your attacks.
+## Version: 1.0
+ShaguStance.lua
