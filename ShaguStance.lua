@@ -1,111 +1,42 @@
+local function strsplit(delimiter, subject)
+  local delimiter, fields = delimiter or ":", {}
+  local pattern = string.format("([^%s]+)", delimiter)
+  string.gsub(subject, pattern, function(c) fields[table.getn(fields)+1] = c end)
+  return unpack(fields)
+end
+
 ShaguStanceDance = CreateFrame("Frame")
 ShaguStanceDance:RegisterEvent("UI_ERROR_MESSAGE")
+ShaguStanceDance:SetScript("OnEvent", function()
+  ShaguStanceDance.lastError = arg1
+end)
 
-ShaguStanceDanceLastErr = ""
-Hook_CastSpell = CastSpell
-Hook_CastSpellByName = CastSpellByName
-Hook_UseAction = UseAction
+ShaguStanceDance.lastError = ""
+ShaguStanceDance.scanString = string.gsub(SPELL_FAILED_ONLY_SHAPESHIFT, "%%s", "(.+)")
+ShaguStanceDance.CastSpell = CastSpell
+ShaguStanceDance.CastSpellByName = CastSpellByName
+ShaguStanceDance.UseAction = UseAction
 
-local locale = GetLocale()
-
-if locale == "deDE" then
-  ShaguStanceDance.BattleStance = "Kampfhaltung"
-  ShaguStanceDance.DefensiveStance = "Verteidigungshaltung"
-  ShaguStanceDance.BerserkerStance = "Berserkerhaltung"
-  ShaguStanceDance.wantBattleStance = "Muss in Kampfhaltung sein."
-  ShaguStanceDance.wantDefensiveStance = "Muss in Verteidigungshaltung sein."
-  ShaguStanceDance.wantBerserkerStance = "Muss in Berserkerhaltung sein."
-  ShaguStanceDance.wantBattleDefStance = "Muss in Kampfhaltung, Verteidigungshaltung sein."
-  ShaguStanceDance.wantBattleBerserkStance = "Muss in Kampfhaltung, Berserkerhaltung sein."
-elseif locale == "frFR" then
-  ShaguStanceDance.BattleStance = "Posture de combat"
-  ShaguStanceDance.DefensiveStance = "Posture défensive"
-  ShaguStanceDance.BerserkerStance = "Posture berserker"
-  ShaguStanceDance.wantBattleStance = "Requiert Posture de combat"
-  ShaguStanceDance.wantDefensiveStance = "Requiert Posture défensive"
-  ShaguStanceDance.wantBerserkerStance = "Requiert Posture berserker"
-  ShaguStanceDance.wantBattleDefStance = "Requiert Posture de combat, Posture défensive"
-  ShaguStanceDance.wantBattleBerserkStance = "Requiert Posture de combat, Posture berserker"
-elseif locale == "ruRU" then
-  ShaguStanceDance.BattleStance = "Боевая стойка"
-  ShaguStanceDance.DefensiveStance = "Оборонительная стойка"
-  ShaguStanceDance.BerserkerStance = "Стойка берсерка"
-  ShaguStanceDance.wantBattleStance = "Необходимо находиться в Боевая стойка."
-  ShaguStanceDance.wantDefensiveStance = "Необходимо находиться в Оборонительная стойка."
-  ShaguStanceDance.wantBerserkerStance = "Необходимо находиться в Стойка берсерка."
-  ShaguStanceDance.wantBattleDefStance = "Необходимо находиться в Боевая стойка, Оборонительная стойка."
-  ShaguStanceDance.wantBattleBerserkStance = "Необходимо находиться в Боевая стойка, Стойка берсерка."
-elseif locale == "zhCN" then
-  ShaguStanceDance.BattleStance = "战斗姿态"
-  ShaguStanceDance.DefensiveStance = "防御姿态"
-  ShaguStanceDance.BerserkerStance = "狂暴姿态"
-  ShaguStanceDance.wantBattleStance = "必须在战斗姿态中"
-  ShaguStanceDance.wantDefensiveStance = "必须在防御姿态中"
-  ShaguStanceDance.wantBerserkerStance = "必须在狂暴姿态中"
-  ShaguStanceDance.wantBattleDefStance = "必须在战斗姿态, 防御姿态中"
-  ShaguStanceDance.wantBattleBerserkStance = "必须在战斗姿态, 狂暴姿态中"
-else
-  ShaguStanceDance.BattleStance = "Battle Stance"
-  ShaguStanceDance.DefensiveStance = "Defensive Stance"
-  ShaguStanceDance.BerserkerStance = "Berserker Stance"
-  ShaguStanceDance.wantBattleStance = "Must be in Battle Stance"
-  ShaguStanceDance.wantDefensiveStance = "Must be in Defensive Stance"
-  ShaguStanceDance.wantBerserkerStance = "Must be in Berserker Stance"
-  ShaguStanceDance.wantBattleDefStance = "Must be in Battle Stance, Defensive Stance"
-  ShaguStanceDance.wantBattleBerserkStance = "Must be in Battle Stance, Berserker Stance"
+function ShaguStanceDance:SwitchStance()
+  for stance in string.gfind(ShaguStanceDance.lastError, ShaguStanceDance.scanString) do
+    for _, stance in pairs({ strsplit(",", stance)}) do
+      ShaguStanceDance.CastSpellByName(string.gsub(stance,"^%s*(.-)%s*$", "%1"))
+    end
+  end
+  ShaguStanceDance.lastError = ""
 end
 
 function CastSpell(spellId, spellbookTabNum)
-  if ShaguStanceDanceLastErr == ShaguStanceDance.wantBattleStance then
-    Hook_CastSpellByName(ShaguStanceDance.BattleStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantBattleDefStance then
-    Hook_CastSpellByName(ShaguStanceDance.BattleStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantBerserkerStance then
-    Hook_CastSpellByName(ShaguStanceDance.BerserkerStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantDefensiveStance then
-    Hook_CastSpellByName(ShaguStanceDance.DefensiveStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantBattleBerserkStance then
-    Hook_CastSpellByName(ShaguStanceDance.BattleStance)
-  end
-  ShaguStanceDanceLastErr = ""
-
-  Hook_CastSpell(spellId, spellbookTabNum)
+  ShaguStanceDance:SwitchStance()
+  ShaguStanceDance.CastSpell(spellId, spellbookTabNum)
 end
 
 function CastSpellByName(spellName, onSelf)
-  if ShaguStanceDanceLastErr == ShaguStanceDance.wantBattleStance then
-    Hook_CastSpellByName(ShaguStanceDance.BattleStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantBattleDefStance then
-    Hook_CastSpellByName(ShaguStanceDance.BattleStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantBerserkerStance then
-    Hook_CastSpellByName(ShaguStanceDance.BerserkerStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantDefensiveStance then
-    Hook_CastSpellByName(ShaguStanceDance.DefensiveStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantBattleBerserkStance then
-    Hook_CastSpellByName(ShaguStanceDance.BattleStance)
-  end
-  ShaguStanceDanceLastErr = ""
-
-  Hook_CastSpellByName(spellName, onSelf)
+  ShaguStanceDance:SwitchStance()
+  ShaguStanceDance.CastSpellByName(spellName, onSelf)
 end
 
 function UseAction(slot, checkCursor, onSelf)
-  if ShaguStanceDanceLastErr == ShaguStanceDance.wantBattleStance then
-    Hook_CastSpellByName(ShaguStanceDance.BattleStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantBattleDefStance then
-    Hook_CastSpellByName(ShaguStanceDance.BattleStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantBerserkerStance then
-    Hook_CastSpellByName(ShaguStanceDance.BerserkerStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantDefensiveStance then
-    Hook_CastSpellByName(ShaguStanceDance.DefensiveStance)
-  elseif ShaguStanceDanceLastErr == ShaguStanceDance.wantBattleBerserkStance then
-    Hook_CastSpellByName(ShaguStanceDance.BattleStance)
-  end
-  ShaguStanceDanceLastErr = ""
-
-  Hook_UseAction(slot, checkCursor, onSelf)
+  ShaguStanceDance:SwitchStance()
+  ShaguStanceDance.UseAction(slot, checkCursor, onSelf)
 end
-
-ShaguStanceDance:SetScript("OnEvent", function()
-  ShaguStanceDanceLastErr = arg1
-end)
