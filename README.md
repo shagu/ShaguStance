@@ -1,7 +1,7 @@
 # ShaguStance
 A Vanilla Addon that automatically switches to the required stance. E.g when trying to charge, while in berserk stance, it will automatically switch.
 
-![preview](http://shagu.org/shagucollection/img/ShaguStance.jpg)
+![battlestance](https://raw.githubusercontent.com/shagu/ShaguAddons/master/_img/ShaguStance/battlestance.jpg)
 
 **Notice:**
 *This Addon or a superior and maintained version of it, is already included in [pfUI](https://github.com/shagu.pfUI). If using this in combination with pfUI you might get bad results or up to performance regressions.*
